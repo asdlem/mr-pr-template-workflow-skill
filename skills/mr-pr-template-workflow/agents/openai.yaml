@@ -1,0 +1,4 @@
+interface:
+  display_name: "MR/PR Template Workflow"
+  short_description: "Safe MR/PR preview and submit workflow"
+  default_prompt: "Use $mr-pr-template-workflow to prepare an MR or PR description, preview it, and submit only after confirmation."
