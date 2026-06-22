@@ -1,85 +1,191 @@
 ---
-name: mr-pr-template-workflow
+name: pr-workflow
 description: Prepare and optionally create GitLab merge requests or GitHub pull requests with project-native templates, repository language/style consistency, preview-before-submit, and safe gh/glab CLI handling. Use when the user asks to prepare, write, preview, create, submit, or open an MR/PR, merge request, pull request, or review-ready branch.
 ---
 
 [English](SKILL.md) | [中文](docs/i18n/zh-CN/SKILL.md)
 
-# MR/PR Template Workflow
+# PR/MR Workflow
 
-Use this skill to prepare a merge request or pull request end to end without losing project conventions or accidentally pushing to the wrong branch.
+Use this skill to prepare a merge request or pull request end to end without
+losing project conventions or accidentally pushing to the wrong branch.
+
+Based on analysis of PR/MR templates and conventions from 16 top projects
+(react, vscode, electron, turborepo, hermes-agent, biome, vllm, dify, and more).
+
+## Template Patterns from Top Projects
+
+Every project template falls into one of these tiers. Match the project, not
+your habit.
+
+### Tier A: Minimalist (react, vscode)
+`## Summary` + `## How did you test this change?`
+
+Two sections, no checkboxes. Forces concise prose over checklist theater.
+React says: *"If you leave this empty, your PR will very likely be closed."*
+VS Code doesn't even provide sections — contributors organically produce
+5–10 labeled sections because the culture demands it.
+
+### Tier B: Three-Section (biome, turborepo)
+`## Summary` + `## Test Plan` + `## Docs`
+
+Documentation is a first-class deliverable. Biome treats docs updates as a
+required section alongside code and tests. Turborepo contributors write
+mini-design-documents with `### Why`, `### What I changed`, and `### Notes`.
+
+### Tier C: Checklist-Driven (ohmyzsh, electron, open-webui)
+Checklist-heavy templates with 7–12 items. Electron enforces:
+*"PRs submitted that do not follow this template will be automatically closed."*
+
+Electron adds a mandatory Release Notes section (`Notes: Fixed ...`).
+Open WebUI requires a full Keep a Changelog breakdown.
+
+### Tier D: Internal-Structured (vllm, openai/codex)
+`## Purpose` / `## Test Plan` / `## Test Result`
+
+Every PR pastes actual test output. vLLM: universally followed, even draft
+PRs include Purpose → Test Plan → Test Result. Codex internal PRs add
+`## Why` / `## What` / `## Impact` / `## Validation`.
+
+### Tier E: Gatekeeper (open-webui, CopilotKit, opencode)
+Issue-first, discussion-first policies. Open WebUI requires:
+- 12 checklist items
+- 17 allowed title prefixes
+- Mandatory CLA section
+- Discussion-first for first-timers
+
+CopilotKit: *"Please PLEASE reach out to us first before starting significant work."*
+Opencode: *"AI-generated descriptions may be IGNORED or CLOSED."*
+
+## AI Disclosure
+
+5 of 16 top projects (31%) now require AI-assistance disclosure in PRs.
+
+| Project | Disclosure format |
+|---------|-------------------|
+| ohmyzsh | Explicit checkbox: "If I used AI tools... I've disclosed it below" |
+| biome | HTML comment at template top; "This PR was implemented with AI assistance from Codex" |
+| dify | `From <Tool Name>` line in Summary |
+| vllm | "AI assistance was used; every line was reviewed per AGENTS.md" |
+| electron | Policy link in checklist: "Using a coding agent / AI? Read the policy" |
+
+**Rule**: If AI tools (Hermes, Claude Code, Codex, Copilot, etc.) contributed
+to the PR, disclose it. Use the project's preferred format. For projects
+without a format, add: `> 🤖 AI assistance: <tool name>. Every line reviewed.`
 
 ## Core Rules
 
-- Prefer project-native templates over every generic template.
-- Preserve template section labels and placeholders exactly when using a project template; fill the content in the selected language.
-- Always preview the title, body, source branch, target branch, and intended action before creating an MR/PR.
+- Prefer project-native templates over any generic template.
+- Preserve template section labels and placeholders exactly; fill content in the selected language.
+- Always preview title, body, source branch, target branch, and action before creating.
 - Create the MR/PR only after explicit user confirmation.
-- When `gh` or `glab` is available, optimize the preview for reading: render the MR/PR body as normal Markdown, not inside a fenced code block, and do not show shell commands unless the user asks.
-- If `gh` or `glab` is unavailable, output manual form fields and stop. Do not ask for submit confirmation.
-- When no suitable CLI is available, split manual form content into separate fenced code blocks so the user can copy fields directly.
-- Never push a local branch to `main`, `master`, `dev`, `develop`, or a release branch by using `source:target` refspecs unless the user explicitly requests that exact push.
+- When `gh` or `glab` is available, render the body as normal Markdown in preview — not in a fenced code block.
+- If `gh` or `glab` is unavailable, output manual form fields and stop.
+- Never push to `main`, `master`, `dev`, `develop`, or a release branch with `source:target` refspecs unless explicitly requested.
 - Never invent issue IDs, test results, approvals, release notes, or screenshots.
+
+## Writing Conventions
+
+### Title
+Match the repo's convention. 13 of 16 projects use Conventional Commits:
+```
+feat(scope): summary
+fix(scope): summary
+docs: summary
+refactor(scope): summary
+```
+
+Exceptions: vLLM uses `[Area]` prefix, Codex internal uses `[Module]`.
+
+### Body Sections
+Every well-written PR body across all 16 projects has these three:
+1. **What** (Summary / Purpose) — 1–3 sentences. What changed, why.
+2. **How I tested** (Test Plan / Verification) — exact commands + results.
+   VS Code: `npm run typecheck-client && npm run eslint`
+   vLLM: `pytest tests/config/test_config.py -v` with pass counts
+3. **Related** (Fixes #NNNN / Closes #NNNN) — real issue link.
+
+Optional but common:
+- **Screenshots** (UI changes) — Before/After table
+- **Risk / Rollout** — migrations, env vars, config changes, external services
+- **Docs** — linked doc PR or "No docs needed"
+
+### Test Plan Quality — What Top Projects Actually Do
+```markdown
+## How did you test this change?
+
+yarn test ReactDOMFloat-test --runInBand
+  ✓ 84 passed, 0 failed
+
+yarn lint
+  ✓ No errors
+
+yarn flow
+  ✓ No errors
+```
+
+Not this:
+```markdown
+## Testing
+- [x] Tested manually
+```
 
 ## Workflow
 
-1. Inspect repository state.
-   - Run `git status --short --branch`, `git remote -v`, `git branch --show-current`, and enough `git log`/`git diff` commands to understand what will be submitted.
-   - Identify source branch from the current branch unless the user specifies another branch.
-   - Identify target branch from the user's request, upstream config, existing MR/PR, project default branch, or local release workflow. Ask if target branch selection is genuinely ambiguous.
-   - Check whether the source branch exists on the intended remote before deciding the create command.
+1. **Inspect repository state.**
+   - `git status --short --branch`, `git remote -v`, `git branch --show-current`
+   - Enough `git log`/`git diff` to understand what's being submitted
+   - Identify source branch; identify target branch from user request, upstream config, or project default
+   - Check whether source branch exists on remote before deciding the create command
 
-2. Find project templates first.
-   - GitLab: check `.gitlab/merge_request_templates/*.md`, especially `Default.md`; if multiple templates match equally, ask the user to choose.
-   - GitHub: check `.github/PULL_REQUEST_TEMPLATE.md`, `.github/pull_request_template.md`, `.github/PULL_REQUEST_TEMPLATE/*.md`, `PULL_REQUEST_TEMPLATE.md`, and `docs/PULL_REQUEST_TEMPLATE.md`.
-   - Treat `CONTRIBUTING.md`, `.github/CONTRIBUTING.md`, docs, and repo instructions as supplementary constraints, not as replacements for MR/PR templates.
-   - If no project template exists, load `references/template-sources.md` and synthesize a compact template from the fallback pattern.
+2. **Find project templates first.**
+   - GitLab: `.gitlab/merge_request_templates/*.md`, especially `Default.md`
+   - GitHub: `.github/PULL_REQUEST_TEMPLATE.md`, `.github/pull_request_template.md`, `.github/PULL_REQUEST_TEMPLATE/*.md`
+   - Treat `CONTRIBUTING.md` as supplementary constraints, not template replacement
+   - If no project template: load `references/template-sources.md` and synthesize from the Tier A pattern (Summary + Test Plan + Related)
 
-3. Determine output language and style.
-   - Highest priority: explicit user language instruction.
-   - Then inspect recent same-repo MR/PR titles and descriptions using `glab mr list/view` or `gh pr list/view` when available.
-   - Then inspect current branch commit subjects with `git log --format=%s <base>..HEAD`.
-   - Fallback to the current conversation language.
-   - Keep Conventional Commit prefixes in English when the repo uses them, but write the human-readable subject/body in the selected language.
+3. **Determine output language and style.**
+   - Highest: explicit user language instruction
+   - Then: recent same-repo MR/PR titles and descriptions (`gh pr list --limit 5 --json title,body`)
+   - Then: current branch commit subjects (`git log --format=%s`)
+   - Fallback: current conversation language
+   - Keep Conventional Commit prefixes in English; write human-readable text in selected language
 
-4. Draft title and body.
-   - Title: summarize the actual change set, matching repo commit/MR naming style.
-   - Body: fill every relevant project-template section. Mark non-applicable sections as `N/A`, `None`, or the selected-language equivalent only when the existing template style supports it.
-   - Verification: list exact commands run and their result. If not run, say so plainly with the reason.
-   - Risk/rollout: mention migrations, env vars, config changes, external services, deploy impact, or say none known.
-   - Related links: include real issue/MR/PR URLs only when found or provided.
+4. **Draft title and body.**
+   - Title: match repo convention (Conventional Commits, `[Area]`, or plain)
+   - Body: fill every relevant project-template section; mark N/A sections per template style
+   - Verification: list exact commands run and their results; say why if not run
+   - Risk: mention migrations, env vars, config changes, deploy impact, or "none known"
+   - Related links: only real URLs actually found
 
-5. Preview before submission.
-   If `gh` or `glab` is available, show a reading-oriented preview:
-   - provider: GitLab or GitHub
-   - source branch
-   - target branch
+5. **Add AI disclosure if applicable.**
+   - Match the project's preferred format from the table above
+   - For unlisted projects: `> 🤖 AI assistance: Hermes. Every line reviewed by human.`
+
+6. **Preview before submission.**
+   Show in reading-oriented format:
+   - provider + source/target branch
    - title
-   - body rendered as normal Markdown
-   - whether the action would create a new MR/PR or update an existing one
-   - the CLI that will be used
+   - body as normal Markdown
+   - new vs. update
+   - CLI that will be used
+   - Do NOT include command blocks by default — user cares about content, not shell syntax
 
-   Do not include command blocks by default in the CLI-available path. The user cares about the MR/PR content and the action summary, not the exact shell command. Show exact commands only when the user asks, when diagnosing a CLI problem, or when no CLI is available.
-
-   If no suitable CLI is available, show a copy-oriented manual preview with separate fenced code blocks for provider/branches, title, and description.
-
-6. Submit only after confirmation.
-   - GitLab: prefer `glab mr create`. Follow the official GitLab `glab` skill if available, especially its guidance to use `--push`, `-H`, project templates, and file-backed descriptions.
-   - GitHub: prefer `gh pr create --base <target> --head <source> --title <title> --body-file <file>`.
-   - Write long descriptions to a temporary file and pass the file content or `--body-file`; do not inline bodies containing backticks, `$`, shell syntax, or markdown code blocks.
-   - If branch push is needed, push the branch by name: `git push -u <remote> <source>`. Do not use `<source>:<target>`.
+7. **Submit only after confirmation.**
+   - GitLab: `glab mr create` with `--push`, `-H`, project templates, file-backed descriptions
+   - GitHub: `gh pr create --base <target> --head <source> --title <title> --body-file <file>`
+   - Long descriptions → temp file → `--body-file`; don't inline bodies with backticks/`$`/Markdown code blocks
+   - Push branch: `git push -u <remote> <source>` (never `source:target`)
 
 ## CLI Notes
 
-Use `glab` for GitLab and `gh` for GitHub when available. If both are available and the remote provider is still unclear, decide from `git remote -v`; ask only if the same worktree has competing remotes and the intended host cannot be inferred.
-
-For GitLab command details, prefer the official GitLab AI Skills `glab` skill when installed locally. If it is not installed, use its public reference as guidance:
-
+Use `glab` for GitLab, `gh` for GitHub. If both available, decide from `git remote -v`.
+For GitLab details, prefer the official `glab` skill:
 - https://gitlab.com/gitlab-org/ai/skills/-/blob/main/skills/glab/SKILL.md
 
 ## Manual Fallback
 
-When no suitable CLI is available, provide a manual form split into copyable blocks:
+When no CLI available, provide copyable blocks:
 
 ```text
 Provider:
@@ -95,8 +201,9 @@ Title:
 Description:
 ```
 
-Then stop. Do not ask the user to confirm a submission that cannot be performed with available tools.
+Then stop. Don't ask for submission confirmation when it can't be performed.
 
 ## Reference
 
-Load `references/template-sources.md` only when no project-native template exists, when choosing a fallback structure, or when the user asks why the generated template has those sections.
+Load `references/template-sources.md` only when no project-native template
+exists or when the user asks why the generated template has those sections.
