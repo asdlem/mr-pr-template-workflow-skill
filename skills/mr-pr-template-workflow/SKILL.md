@@ -3,8 +3,6 @@ name: pr-workflow
 description: Prepare and optionally create GitLab merge requests or GitHub pull requests with project-native templates, repository language/style consistency, preview-before-submit, and safe gh/glab CLI handling. Use when the user asks to prepare, write, preview, create, submit, or open an MR/PR, merge request, pull request, or review-ready branch.
 ---
 
-[English](SKILL.md) | [中文](docs/i18n/zh-CN/SKILL.md)
-
 # PR/MR Workflow
 
 Use this skill to prepare a merge request or pull request end to end without

@@ -3,8 +3,6 @@ name: pr-workflow
 description: 使用项目原生模板、仓库语言/风格一致性、提交前预览和安全的 gh/glab CLI 操作，准备并可选择性创建 GitLab Merge Request 或 GitHub Pull Request。当用户要求准备、编写、预览、创建、提交或打开 MR/PR、合并请求、拉取请求或就绪分支时使用。
 ---
 
-[English](../../../skills/mr-pr-template-workflow/SKILL.md) | [中文](SKILL.md)
-
 # PR/MR 工作流
 
 使用此 Skill 端到端准备合并请求或拉取请求，不丢失项目约定，也不意外推送到错误分支。
