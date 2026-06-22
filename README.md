@@ -1,3 +1,5 @@
+[English](README.md) | [中文](README.zh-CN.md)
+
 # MR/PR Template Workflow Skill
 
 Agent Skill for preparing GitLab merge requests and GitHub pull requests with:
