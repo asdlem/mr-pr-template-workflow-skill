@@ -1,5 +1,5 @@
 ---
-name: pr-workflow
+name: mr-pr-template-workflow
 description: Prepare and optionally create GitLab merge requests or GitHub pull requests with project-native templates, repository language/style consistency, preview-before-submit, and safe gh/glab CLI handling. Use when the user asks to prepare, write, preview, create, submit, or open an MR/PR, merge request, pull request, or review-ready branch.
 ---
 
@@ -67,9 +67,10 @@ Opencode: *"AI-generated descriptions may be IGNORED or CLOSED."*
 | vllm | "AI assistance was used; every line was reviewed per AGENTS.md" |
 | electron | Policy link in checklist: "Using a coding agent / AI? Read the policy" |
 
-**Rule**: If AI tools (Hermes, Claude Code, Codex, Copilot, etc.) contributed
-to the PR, disclose it. Use the project's preferred format. For projects
-without a format, add: `> 🤖 AI assistance: <tool name>. Every line reviewed.`
+**Rule**: Add AI-assistance disclosure only when the project template,
+`CONTRIBUTING`, or repository policy requires it. Use the project's preferred
+format exactly. Do not add a generic disclosure line by default, and never
+invent the tool name or reviewer statement.
 
 ## Core Rules
 
@@ -155,10 +156,11 @@ Not this:
    - Verification: list exact commands run and their results; say why if not run
    - Risk: mention migrations, env vars, config changes, deploy impact, or "none known"
    - Related links: only real URLs actually found
+   - AI disclosure: include it only when required by the project template or repository policy.
 
 5. **Add AI disclosure if applicable.**
-   - Match the project's preferred format from the table above
-   - For unlisted projects: `> 🤖 AI assistance: Hermes. Every line reviewed by human.`
+   - Match the project's preferred format from the table above.
+   - If the project has no disclosure requirement, do not add one by default.
 
 6. **Preview before submission.**
    Show in reading-oriented format:
@@ -172,13 +174,18 @@ Not this:
 7. **Submit only after confirmation.**
    - GitLab: `glab mr create` with `--push`, `-H`, project templates, file-backed descriptions
    - GitHub: `gh pr create --base <target> --head <source> --title <title> --body-file <file>`
-   - Long descriptions → temp file → `--body-file`; don't inline bodies with backticks/`$`/Markdown code blocks
+   - For GitLab `glab mr create`, do **not** assume GitHub-style file flags exist. Current verified `glab` supports `--description <text>`, but not `--description-file`; write long descriptions to a temporary file only as a staging aid, then pass the file content via `--description "$(cat "$file")"` or an equivalent safely quoted variable.
+   - For GitHub `gh pr create`, pass long descriptions with `--body-file <file>`.
+   - Do not inline bodies containing backticks, `$`, shell syntax, or Markdown code blocks unless they are already held in a safely quoted variable.
    - Push branch: `git push -u <remote> <source>` (never `source:target`)
 
 ## CLI Notes
 
 Use `glab` for GitLab, `gh` for GitHub. If both available, decide from `git remote -v`.
-For GitLab details, prefer the official `glab` skill:
+
+Before using non-routine CLI flags, inspect the local command's `--help`. Do not assume GitHub `gh` flags exist in GitLab `glab`, and do not assume a newer online CLI reference matches the installed binary.
+
+For GitLab command details, prefer the official GitLab AI Skills `glab` skill when installed locally. If it is not installed, use its public reference as guidance:
 - https://gitlab.com/gitlab-org/ai/skills/-/blob/main/skills/glab/SKILL.md
 
 ## Manual Fallback

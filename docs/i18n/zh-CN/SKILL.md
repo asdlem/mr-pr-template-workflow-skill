@@ -1,5 +1,5 @@
 ---
-name: pr-workflow
+name: mr-pr-template-workflow
 description: 使用项目原生模板、仓库语言/风格一致性、提交前预览和安全的 gh/glab CLI 操作，准备并可选择性创建 GitLab Merge Request 或 GitHub Pull Request。当用户要求准备、编写、预览、创建、提交或打开 MR/PR、合并请求、拉取请求或就绪分支时使用。
 ---
 
@@ -61,9 +61,8 @@ Opencode：*"AI 生成的描述可能被忽略或关闭。"*
 | vllm | "使用了 AI 辅助；每行代码均按 AGENTS.md 进行了人工审查" |
 | electron | 清单中的政策链接："使用编码 Agent / AI？请阅读政策" |
 
-**规则**：如果 AI 工具（Hermes、Claude Code、Codex、Copilot 等）参与了 PR 编写，请披露。
-使用项目首选的格式。若项目无专门格式，添加：
-`> 🤖 AI 辅助：<工具名称>。每行代码已经过人工审查。`
+**规则**：仅当项目模板、`CONTRIBUTING` 或仓库策略要求时，才添加 AI 辅助披露。
+必须严格使用项目首选格式。不要默认添加通用披露语，也不要编造工具名称或审查声明。
 
 ## 核心规则
 
@@ -149,10 +148,11 @@ yarn flow
    - 验证：列出确切运行的命令及结果；若未运行，说明原因
    - 风险：提及迁移、环境变量、配置变更、部署影响，或"无已知风险"
    - 相关链接：仅包含实际找到的真实 URL
+   - AI 辅助披露：仅在项目模板或仓库策略要求时添加。
 
 5. **如适用，添加 AI 辅助披露。**
-   - 匹配上表中项目的首选格式
-   - 对于未列出的项目：`> 🤖 AI 辅助：Hermes。每行代码已经过人工审查。`
+   - 匹配上表中项目的首选格式。
+   - 如果项目没有披露要求，默认不添加。
 
 6. **提交前预览。**
    以阅读导向格式展示：
@@ -166,13 +166,18 @@ yarn flow
 7. **仅在确认后提交。**
    - GitLab：`glab mr create` 使用 `--push`、`-H`、项目模板、基于文件的描述
    - GitHub：`gh pr create --base <target> --head <source> --title <title> --body-file <file>`
-   - 长描述 → 临时文件 → `--body-file`；不要内联含反引号/`$`/Markdown 代码块的正文
+   - 对 GitLab `glab mr create`，不要假设存在 GitHub 风格的文件参数。当前已验证 `glab` 支持 `--description <text>`，但不支持 `--description-file`；长描述可以先写入临时文件作为暂存，再通过 `--description "$(cat "$file")"` 或等价的安全引用变量传入。
+   - 对 GitHub `gh pr create`，长描述使用 `--body-file <file>`。
+   - 除非正文已放入安全引用变量，否则不要内联包含反引号、`$`、shell 语法或 Markdown 代码块的正文。
    - 推送分支：`git push -u <remote> <source>`（绝不使用 `source:target`）
 
 ## CLI 注意事项
 
 GitLab 使用 `glab`，GitHub 使用 `gh`。若两者均可用，从 `git remote -v` 判断。
-GitLab 详细信息优先参考官方 `glab` Skill：
+
+使用非常规 CLI 参数前，先查看本地命令的 `--help`。不要假设 GitHub `gh` 的参数在 GitLab `glab` 中也存在，也不要假设线上新版 CLI 文档一定匹配本机已安装版本。
+
+GitLab 命令细节优先使用本地已安装的官方 GitLab AI Skills `glab` Skill。若本地未安装，则参考其公开说明：
 - https://gitlab.com/gitlab-org/ai/skills/-/blob/main/skills/glab/SKILL.md
 
 ## 手动回退
